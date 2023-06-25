@@ -1,0 +1,93 @@
+package org.thethingsnetwork.mqtt;
+
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import java.sql.*;
+
+public class Main implements MqttCallback {
+
+    MqttClient client;
+    private static final String URL = "jdbc:mysql://127.0.0.1:3306/dataenergy";
+    private static final String USUARIO = "root";
+    private static final String CONTRASENA = "MySqL1234.";
+
+    public Main() {
+    }
+
+    public static void main(String[] args) {
+        try {
+            System.out.println("Empieza la conexion a la base de datos");
+            // Establecer la conexión
+            Connection conexion = DriverManager.getConnection(URL, USUARIO, CONTRASENA);
+
+            System.out.println("Conexion realizada");
+
+            // Realizar operaciones en la base de datos
+            Statement statement = conexion.createStatement();
+
+            String sql_insert = "INSERT INTO salas VALUES (4, 'Katarina')";
+            statement.executeUpdate(sql_insert);
+            System.out.println("Se insertaron las filas correctamente ");
+
+            String sql_select = "SELECT * FROM salas";
+            ResultSet rs = statement.executeQuery(sql_select);
+            while(rs.next()){
+                //Display values
+                System.out.print("ID: " + rs.getInt("id"));
+                System.out.print(", Nombre: " + rs.getString("nombre"));
+            }
+
+            // Cerrar la conexión
+            conexion.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        new Main().doDemo();
+    }
+
+    public void doDemo() {
+        try {
+            String username   = "energy-consumption-server@ttn";
+            String password   = "NNSXS.Z2F2J25YDRV2VC4NEUTD4AXYDXW4SN63PHPDQLQ.IGRAZFG4B7DSEBZVGW626W3JRTPMH7J2EMF3TD6FVLH63CX7KL6Q";
+            String serverurl  = "tcp://eu1.cloud.thethings.network:1883";
+            String clientId   = MqttClient.generateClientId();
+
+            MqttConnectOptions options = new MqttConnectOptions();
+            options.setCleanSession(true);
+            options.setUserName(username);
+            options.setPassword(password.toCharArray());
+
+            client = new MqttClient(serverurl, clientId, null);
+            System.out.println("Conectamos con el mqtt server");
+            client.connect(options);
+            client.setCallback(this);
+            client.subscribe("#");
+
+        } catch (MqttException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void connectionLost(Throwable cause) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void messageArrived(String topic, MqttMessage message)
+            throws Exception {
+        System.out.println(message);
+    }
+
+    @Override
+    public void deliveryComplete(IMqttDeliveryToken token) {
+        // TODO Auto-generated method stub
+
+    }
+
+}
